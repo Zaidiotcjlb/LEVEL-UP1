@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Level Up Walk-A-Thon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0314;
+    --purple:#8b2fe0;
+    --purple-bright:#b45cff;
+    --purple-hot:#d68cff;
+    --purple-glow: rgba(180,92,255,0.55);
+    --panel: rgba(139,47,224,0.08);
+    --panel-border: rgba(180,92,255,0.28);
+    --text-dim:#b8a6cb;
+    --text-soft:#e7dcf2;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background:
+      radial-gradient(ellipse 1100px 750px at 6% 96%, rgba(139,47,224,0.55), transparent 62%),
+      radial-gradient(ellipse 1000px 750px at 96% 4%, rgba(139,47,224,0.42), transparent 62%),
+      radial-gradient(ellipse 1400px 900px at 50% 50%, rgba(90,25,150,0.28), transparent 72%),
+      linear-gradient(180deg, #0f0518, #060109 60%, #0a0212);
+    background-attachment:fixed;
+    color:#fff;
+    font-family:'Rajdhani', 'Segoe UI', Tahoma, Arial, sans-serif;
+    direction:ltr;
+    overflow-x:hidden;
+    position:relative;
+    min-height:100vh;
+  }
+
+  body::after{
+    content:"";
+    position:fixed;
+    inset:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events:none;
+    z-index:5;
+    mix-blend-mode:overlay;
+  }
+
+  .neon-streak{
+    position:fixed;
+    left:-10%;
+    bottom:6%;
+    width:120%;
+    height:220px;
+    pointer-events:none;
+    z-index:0;
+    opacity:0.75;
+  }
+  .neon-streak.top{
+    top:4%;
+    bottom:auto;
+    opacity:0.5;
+    transform:scaleY(-1);
+  }
+
+  /* corner HUD frame accents */
+  .frame-corner{
+    position:fixed;
+    width:84px;
+    height:84px;
+    border:2px solid rgba(180,92,255,0.65);
+    pointer-events:none;
+    z-index:3;
+    filter:drop-shadow(0 0 10px rgba(180,92,255,0.5));
+  }
+  .frame-corner.tl{ top:20px; left:20px; border-right:none; border-bottom:none; border-radius:14px 0 0 0; }
+  .frame-corner.br{ bottom:20px; right:20px; border-left:none; border-top:none; border-radius:0 0 14px 0; }
+  .frame-corner.tr{ top:20px; right:20px; border-left:none; border-bottom:none; border-radius:0 14px 0 0; width:40px; height:40px; opacity:0.5; }
+  .frame-corner.bl{ bottom:20px; left:20px; border-right:none; border-top:none; border-radius:0 0 0 14px; width:40px; height:40px; opacity:0.5; }
+
+  /* floating ambient particles */
+  .particles{
+    position:fixed;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .particle{
+    position:absolute;
+    width:4px;
+    height:4px;
+    border-radius:50%;
+    background:var(--purple-hot);
+    box-shadow:0 0 10px 3px var(--purple-glow);
+    opacity:0;
+    animation:drift 10s ease-in-out infinite;
+  }
+  @keyframes drift{
+    0%{ opacity:0; transform:translateY(0) translateX(0); }
+    15%{ opacity:1; }
+    85%{ opacity:0.7; }
+    100%{ opacity:0; transform:translateY(-140px) translateX(24px); }
+  }
+
+  /* faint footstep trail motif, echoing the walk theme */
+  .footsteps{
+    display:flex;
+    align-items:center;
+    gap:22px;
+    margin:26px 0 6px;
+    opacity:0.55;
+  }
+  .footsteps svg{ width:16px; height:16px; fill:var(--purple-bright); filter:drop-shadow(0 0 6px var(--purple-glow)); }
+  .footsteps svg:nth-child(2){ transform:translateY(8px); }
+  .footsteps svg:nth-child(4){ transform:translateY(8px); }
+  .footsteps .dots{
+    flex:1;
+    height:1px;
+    background:repeating-linear-gradient(90deg, var(--purple-bright) 0 4px, transparent 4px 10px);
+    opacity:0.5;
+  }
+
+  /* ===== brand bar ===== */
+  .topbar{
+    position:relative;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    gap:16px;
+    padding:28px clamp(24px, 5vw, 64px) 0;
+    opacity:0;
+    animation:fadeUp .8s ease forwards;
+  }
+  .brand-badge{
+    border:2px solid var(--purple-bright);
+    border-radius:8px;
+    padding:6px 13px;
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:12px;
+    line-height:1.15;
+    letter-spacing:1.5px;
+    color:#fff;
+    background:rgba(139,47,224,0.06);
+    animation:badgePulse 3.2s ease-in-out infinite;
+  }
+  @keyframes badgePulse{
+    0%,100%{ box-shadow:0 0 20px var(--purple-glow), inset 0 0 12px rgba(180,92,255,0.16); }
+    50%{ box-shadow:0 0 42px var(--purple-glow), inset 0 0 20px rgba(180,92,255,0.3); }
+  }
+  .brand-badge span{ display:block; color:var(--purple-bright); }
+  .brand-name{ font-family:'Space Grotesk', sans-serif; font-size:18px; font-weight:700; letter-spacing:1.5px; }
+  .brand-tag{ font-size:10.5px; letter-spacing:3px; color:var(--text-dim); margin-top:2px; font-weight:600; }
+
+  /* ===== main horizontal layout ===== */
+  .main{
+    position:relative;
+    z-index:2;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:48px;
+    max-width:1280px;
+    margin:0 auto;
+    padding:48px clamp(24px, 5vw, 64px) 64px;
+    min-height:calc(100vh - 90px);
+    flex-wrap:wrap;
+  }
+
+  .left{
+    flex:1 1 420px;
+    max-width:520px;
+    opacity:0;
+    animation:fadeUp .8s ease .12s forwards;
+  }
+
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:clamp(38px, 5.2vw, 64px);
+    line-height:1.02;
+    letter-spacing:0.5px;
+    font-weight:700;
+  }
+  h1 .top{ color:#fff; }
+  h1 .bottom{
+    background:linear-gradient(90deg, var(--purple-bright), var(--purple-hot), var(--purple-bright));
+    background-size:200% auto;
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    filter:drop-shadow(0 0 28px var(--purple-glow));
+    animation:shimmer 6s linear infinite;
+  }
+  @keyframes shimmer{ to{ background-position:200% center; } }
+
+  .subtitle{
+    color:var(--text-soft);
+    font-size:16.5px;
+    font-weight:500;
+    max-width:440px;
+    margin:22px 0 0;
+    line-height:1.6;
+  }
+
+  .rule{
+    width:64px;
+    height:2px;
+    background:linear-gradient(90deg, var(--purple-bright), transparent);
+    margin:28px 0;
+    box-shadow:0 0 12px var(--purple-glow);
+  }
+
+  .banner{
+    margin-top:12px;
+    max-width:480px;
+    background:linear-gradient(90deg, rgba(139,47,224,0.32), rgba(139,47,224,0.05));
+    border:1px solid var(--panel-border);
+    border-radius:16px;
+    padding:20px 24px;
+    display:flex;
+    align-items:center;
+    gap:16px;
+    box-shadow:0 10px 40px rgba(139,47,224,0.15);
+  }
+  .banner .megaphone{ color:var(--purple-bright); flex:0 0 auto; filter:drop-shadow(0 0 10px var(--purple-glow)); }
+  .banner .title{ color:var(--purple-hot); font-weight:700; font-size:15.5px; letter-spacing:1.5px; font-family:'Space Grotesk', sans-serif; }
+  .banner .sub{ color:var(--text-dim); font-size:13px; margin-top:3px; font-weight:500; }
+
+  /* ===== right column ===== */
+  .right{
+    flex:1 1 480px;
+    max-width:560px;
+    opacity:0;
+    animation:fadeUp .8s ease .24s forwards;
+  }
+
+  .eyebrow{
+    color:var(--purple-bright);
+    letter-spacing:4px;
+    font-size:13.5px;
+    font-weight:700;
+    margin-bottom:18px;
+  }
+
+  .countdown{
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+    margin-bottom:32px;
+  }
+  .box{
+    background:linear-gradient(180deg, rgba(139,47,224,0.14), rgba(139,47,224,0.03));
+    border:1px solid var(--panel-border);
+    border-radius:14px;
+    width:106px;
+    padding:18px 0 14px;
+    text-align:center;
+    backdrop-filter:blur(6px);
+    box-shadow:0 0 0 1px rgba(180,92,255,0.05) inset, 0 8px 30px rgba(139,47,224,0.18);
+    transition:transform .3s ease, box-shadow .3s ease;
+  }
+  .box:hover{ transform:translateY(-4px); box-shadow:0 0 0 1px rgba(180,92,255,0.15) inset, 0 12px 36px rgba(139,47,224,0.32); }
+  .box .num{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:40px;
+    font-weight:700;
+    color:var(--purple-hot);
+    text-shadow:0 0 24px var(--purple-glow), 0 0 46px rgba(139,47,224,0.4);
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+  }
+  .box .label{ margin-top:8px; font-size:10.5px; letter-spacing:2.5px; color:var(--text-dim); font-weight:700; }
+
+  .details{ display:flex; flex-direction:column; gap:18px; }
+  .detail-row{ display:flex; align-items:flex-start; gap:15px; }
+  .icon{
+    width:42px; height:42px; flex:0 0 42px;
+    border:1px solid var(--panel-border);
+    border-radius:10px;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--purple-bright);
+    background:var(--panel);
+    box-shadow:0 0 16px rgba(139,47,224,0.15) inset;
+  }
+  .icon svg{ width:18px; height:18px; }
+  .detail-label{ font-size:11px; letter-spacing:2.5px; font-weight:700; color:#fff; margin-bottom:3px; }
+  .detail-value{ font-size:14.5px; font-weight:500; color:var(--text-dim); line-height:1.5; }
+  .detail-value a{ color:var(--purple-bright); text-decoration:none; font-weight:600; }
+  .detail-value a:hover{ text-decoration:underline; }
+
+  .finished{
+    color:var(--purple-hot);
+    font-size:22px;
+    font-weight:700;
+    text-shadow:0 0 20px var(--purple-glow);
+  }
+
+  footer{
+    position:relative;
+    z-index:2;
+    text-align:center;
+    color:rgba(184,166,203,0.5);
+    font-size:11.5px;
+    letter-spacing:1.5px;
+    padding-bottom:26px;
+  }
+
+  /* ===== event flyer section ===== */
+  .flyer-section{
+    position:relative;
+    z-index:2;
+    max-width:1280px;
+    margin:0 auto;
+    padding:0 clamp(24px, 5vw, 64px) 56px;
+    display:flex;
+    justify-content:center;
+    opacity:0;
+    animation:fadeUp .8s ease .3s forwards;
+  }
+  .flyer-frame{
+    position:relative;
+    max-width:420px;
+    width:100%;
+    border-radius:20px;
+    padding:10px;
+    background:linear-gradient(180deg, rgba(139,47,224,0.18), rgba(139,47,224,0.03));
+    border:1px solid var(--panel-border);
+    box-shadow:0 0 0 1px rgba(180,92,255,0.05) inset, 0 14px 50px rgba(139,47,224,0.28);
+  }
+  .flyer-frame img{
+    display:block;
+    width:100%;
+    height:auto;
+    border-radius:14px;
+    box-shadow:0 0 30px rgba(139,47,224,0.35);
+  }
+  .flyer-caption{
+    text-align:center;
+    margin-top:14px;
+    color:var(--purple-bright);
+    letter-spacing:2.5px;
+    font-size:11.5px;
+    font-weight:700;
+  }
+
+  @keyframes fadeUp{ from{opacity:0; transform:translateY(14px);} to{opacity:1; transform:translateY(0);} }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:.01ms !important; animation-iteration-count:1 !important; }
+    .box{ transition:none; }
+  }
+
+  /* stack vertically only on narrow screens */
+  @media (max-width:860px){
+    .main{ flex-direction:column; align-items:flex-start; text-align:left; }
+    .left, .right{ max-width:100%; }
+  }
+  @media (max-width:480px){
+    .box{ width:76px; padding:14px 0 10px; }
+    .box .num{ font-size:28px; }
+    .countdown{ gap:8px; }
+  }
+</style>
+</head>
+<body>
+
+  <svg class="neon-streak" viewBox="0 0 1200 220" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="streakGrad" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="#8b2fe0" stop-opacity="0"/>
+        <stop offset="45%" stop-color="#b45cff" stop-opacity="0.9"/>
+        <stop offset="55%" stop-color="#d68cff" stop-opacity="0.9"/>
+        <stop offset="100%" stop-color="#8b2fe0" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="M0,160 C250,60 400,200 650,90 C850,10 1000,140 1200,60" fill="none" stroke="url(#streakGrad)" stroke-width="2.5">
+      <animate attributeName="d" dur="14s" repeatCount="indefinite"
+        values="
+        M0,160 C250,60 400,200 650,90 C850,10 1000,140 1200,60;
+        M0,90 C250,180 400,40 650,150 C850,190 1000,50 1200,130;
+        M0,160 C250,60 400,200 650,90 C850,10 1000,140 1200,60"/>
+    </path>
+  </svg>
+
+  <svg class="neon-streak top" viewBox="0 0 1200 220" preserveAspectRatio="none">
+    <path d="M0,140 C300,40 500,190 750,80 C950,0 1050,120 1200,50" fill="none" stroke="url(#streakGrad)" stroke-width="2">
+      <animate attributeName="d" dur="18s" repeatCount="indefinite"
+        values="
+        M0,140 C300,40 500,190 750,80 C950,0 1050,120 1200,50;
+        M0,60 C300,160 500,20 750,140 C950,190 1050,40 1200,120;
+        M0,140 C300,40 500,190 750,80 C950,0 1050,120 1200,50"/>
+    </path>
+  </svg>
+
+  <div class="frame-corner tl"></div>
+  <div class="frame-corner br"></div>
+  <div class="frame-corner tr"></div>
+  <div class="frame-corner bl"></div>
+
+  <div class="particles" id="particles"></div>
+
+  <div class="topbar">
+    <div class="brand-badge">LEVEL<span>UP</span></div>
+    <div>
+      <div class="brand-name">LEVEL UP</div>
+      <div class="brand-tag">EMPOWER. EDUCATE. ELEVATE.</div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <div class="left">
+      <h1>
+        <div class="top">LEVEL UP</div>
+        <div class="bottom">WALK-A-THON</div>
+      </h1>
+      <p class="subtitle">Every step we take brings us closer to a stronger, more empowered community.</p>
+
+      <div class="footsteps">
+        <svg viewBox="0 0 24 24"><path d="M8 2c-1.7 0-3 2-3 4.5S6.3 11 8 11s3-2 3-4.5S9.7 2 8 2z"/><path d="M6 12c-2 0-3.5 2.2-3.5 5S4 22 6 22s3.5-2.2 3.5-5S8 12 6 12z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M16 2c1.7 0 3 2 3 4.5S17.7 11 16 11s-3-2-3-4.5S14.3 2 16 2z"/><path d="M18 12c2 0 3.5 2.2 3.5 5S20 22 18 22s-3.5-2.2-3.5-5 1.5-5 3.5-5z"/></svg>
+        <div class="dots"></div>
+      </div>
+
+      <div class="rule"></div>
+
+      <div class="banner">
+        <div class="megaphone">
+          <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11v2a2 2 0 0 0 2 2h1l3 5V6l-3 5H5a2 2 0 0 0-2 2z"/><path d="M11 6l7-3v18l-7-3"/><path d="M19 10a3 3 0 0 1 0 4"/></svg>
+        </div>
+        <div>
+          <div class="title">TOGETHER, WE RISE.</div>
+          <div class="sub">Thank you for supporting the Level Up Walk-A-Thon!</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="right">
+      <div class="eyebrow">THE WALK BEGINS IN</div>
+
+      <div class="countdown" id="countdown">
+        <div class="box"><div class="num" id="days">--</div><div class="label">DAYS</div></div>
+        <div class="box"><div class="num" id="hours">--</div><div class="label">HOURS</div></div>
+        <div class="box"><div class="num" id="minutes">--</div><div class="label">MINUTES</div></div>
+        <div class="box"><div class="num" id="seconds">--</div><div class="label">SECONDS</div></div>
+      </div>
+
+      <div class="details">
+        <div class="detail-row">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          </div>
+          <div>
+            <div class="detail-label">DATE</div>
+            <div class="detail-value">Saturday, September 26, 2026</div>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg>
+          </div>
+          <div>
+            <div class="detail-label">TIME</div>
+            <div class="detail-value">10:00 AM ET</div>
+          </div>
+        </div>
+        <div class="detail-row">
+          <div class="icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>
+          </div>
+          <div>
+            <div class="detail-label">LOCATION</div>
+            <div class="detail-value">5401 W 71st St, Indianapolis, IN 46268<br><a href="https://maps.google.com/?q=5401+W+71st+St,+Indianapolis,+IN+46268" target="_blank" rel="noopener">View on Google Maps ↗</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="flyer-section">
+    <div class="flyer-frame">
+      <img src="banner.jpg" alt="Level Up Walk-A-Thon official flyer">
+      <div class="flyer-caption">OFFICIAL EVENT FLYER</div>
+    </div>
+  </div>
+
+  <footer>© 2026 LEVEL UP · ALL RIGHTS RESERVED</footer>
+
+<script>
+  // Target: September 26, 2026, 10:00 AM Eastern Time (EDT, UTC-4)
+  const targetDate = new Date("2026-09-26T10:00:00-04:00");
+
+  const daysEl = document.getElementById('days');
+  const hoursEl = document.getElementById('hours');
+  const minutesEl = document.getElementById('minutes');
+  const secondsEl = document.getElementById('seconds');
+  const countdownEl = document.getElementById('countdown');
+
+  function pad(n){ return n.toString().padStart(2,'0'); }
+
+  function updateCountdown(){
+    const now = new Date();
+    const diff = targetDate - now;
+
+    if(diff <= 0){
+      countdownEl.innerHTML = '<div class="finished">🎉 The walk has begun — see you there!</div>';
+      clearInterval(timer);
+      return;
+    }
+
+    const days = Math.floor(diff / (1000*60*60*24));
+    const hours = Math.floor((diff / (1000*60*60)) % 24);
+    const minutes = Math.floor((diff / (1000*60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+
+    daysEl.textContent = pad(days);
+    hoursEl.textContent = pad(hours);
+    minutesEl.textContent = pad(minutes);
+    secondsEl.textContent = pad(seconds);
+  }
+
+  updateCountdown();
+  const timer = setInterval(updateCountdown, 1000);
+
+  // ambient floating particles
+  const particleField = document.getElementById('particles');
+  const PARTICLE_COUNT = 40;
+  for(let i=0; i<PARTICLE_COUNT; i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random()*100 + 'vw';
+    p.style.top = (30 + Math.random()*65) + 'vh';
+    p.style.animationDelay = (Math.random()*10) + 's';
+    p.style.animationDuration = (8 + Math.random()*8) + 's';
+    p.style.width = p.style.height = (2 + Math.random()*3) + 'px';
+    particleField.appendChild(p);
+  }
+</script>
+
+</body>
+</html>
