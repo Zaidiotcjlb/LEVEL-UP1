@@ -56,6 +56,68 @@
     z-index:0;
     opacity:0.5;
   }
+  .neon-streak.top{
+    top:4%;
+    bottom:auto;
+    opacity:0.3;
+    transform:scaleY(-1);
+  }
+
+  /* corner HUD frame accents */
+  .frame-corner{
+    position:fixed;
+    width:64px;
+    height:64px;
+    border:1.5px solid rgba(180,92,255,0.45);
+    pointer-events:none;
+    z-index:3;
+    filter:drop-shadow(0 0 6px rgba(180,92,255,0.35));
+  }
+  .frame-corner.tl{ top:22px; left:22px; border-right:none; border-bottom:none; border-radius:10px 0 0 0; }
+  .frame-corner.br{ bottom:22px; right:22px; border-left:none; border-top:none; border-radius:0 0 10px 0; }
+
+  /* floating ambient particles */
+  .particles{
+    position:fixed;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .particle{
+    position:absolute;
+    width:4px;
+    height:4px;
+    border-radius:50%;
+    background:var(--purple-hot);
+    box-shadow:0 0 8px 2px var(--purple-glow);
+    opacity:0;
+    animation:drift 10s ease-in-out infinite;
+  }
+  @keyframes drift{
+    0%{ opacity:0; transform:translateY(0) translateX(0); }
+    15%{ opacity:0.85; }
+    85%{ opacity:0.6; }
+    100%{ opacity:0; transform:translateY(-140px) translateX(24px); }
+  }
+
+  /* faint footstep trail motif, echoing the walk theme */
+  .footsteps{
+    display:flex;
+    align-items:center;
+    gap:22px;
+    margin:26px 0 6px;
+    opacity:0.55;
+  }
+  .footsteps svg{ width:16px; height:16px; fill:var(--purple-bright); filter:drop-shadow(0 0 6px var(--purple-glow)); }
+  .footsteps svg:nth-child(2){ transform:translateY(8px); }
+  .footsteps svg:nth-child(4){ transform:translateY(8px); }
+  .footsteps .dots{
+    flex:1;
+    height:1px;
+    background:repeating-linear-gradient(90deg, var(--purple-bright) 0 4px, transparent 4px 10px);
+    opacity:0.5;
+  }
 
   /* ===== brand bar ===== */
   .topbar{
@@ -78,8 +140,12 @@
     line-height:1.15;
     letter-spacing:1.5px;
     color:#fff;
-    box-shadow:0 0 22px var(--purple-glow), inset 0 0 12px rgba(180,92,255,0.15);
     background:rgba(139,47,224,0.06);
+    animation:badgePulse 3.2s ease-in-out infinite;
+  }
+  @keyframes badgePulse{
+    0%,100%{ box-shadow:0 0 18px var(--purple-glow), inset 0 0 10px rgba(180,92,255,0.12); }
+    50%{ box-shadow:0 0 32px var(--purple-glow), inset 0 0 16px rgba(180,92,255,0.22); }
   }
   .brand-badge span{ display:block; color:var(--purple-bright); }
   .brand-name{ font-family:'Space Grotesk', sans-serif; font-size:18px; font-weight:700; letter-spacing:1.5px; }
@@ -277,6 +343,21 @@
     </path>
   </svg>
 
+  <svg class="neon-streak top" viewBox="0 0 1200 220" preserveAspectRatio="none">
+    <path d="M0,140 C300,40 500,190 750,80 C950,0 1050,120 1200,50" fill="none" stroke="url(#streakGrad)" stroke-width="2">
+      <animate attributeName="d" dur="18s" repeatCount="indefinite"
+        values="
+        M0,140 C300,40 500,190 750,80 C950,0 1050,120 1200,50;
+        M0,60 C300,160 500,20 750,140 C950,190 1050,40 1200,120;
+        M0,140 C300,40 500,190 750,80 C950,0 1050,120 1200,50"/>
+    </path>
+  </svg>
+
+  <div class="frame-corner tl"></div>
+  <div class="frame-corner br"></div>
+
+  <div class="particles" id="particles"></div>
+
   <div class="topbar">
     <div class="brand-badge">LEVEL<span>UP</span></div>
     <div>
@@ -293,6 +374,13 @@
         <div class="bottom">WALK-A-THON</div>
       </h1>
       <p class="subtitle">Every step we take brings us closer to a stronger, more empowered community.</p>
+
+      <div class="footsteps">
+        <svg viewBox="0 0 24 24"><path d="M8 2c-1.7 0-3 2-3 4.5S6.3 11 8 11s3-2 3-4.5S9.7 2 8 2z"/><path d="M6 12c-2 0-3.5 2.2-3.5 5S4 22 6 22s3.5-2.2 3.5-5S8 12 6 12z"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M16 2c1.7 0 3 2 3 4.5S17.7 11 16 11s-3-2-3-4.5S14.3 2 16 2z"/><path d="M18 12c2 0 3.5 2.2 3.5 5S20 22 18 22s-3.5-2.2-3.5-5 1.5-5 3.5-5z"/></svg>
+        <div class="dots"></div>
+      </div>
+
       <div class="rule"></div>
 
       <div class="banner">
@@ -386,6 +474,20 @@
 
   updateCountdown();
   const timer = setInterval(updateCountdown, 1000);
+
+  // ambient floating particles
+  const particleField = document.getElementById('particles');
+  const PARTICLE_COUNT = 22;
+  for(let i=0; i<PARTICLE_COUNT; i++){
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.left = Math.random()*100 + 'vw';
+    p.style.top = (30 + Math.random()*65) + 'vh';
+    p.style.animationDelay = (Math.random()*10) + 's';
+    p.style.animationDuration = (8 + Math.random()*8) + 's';
+    p.style.width = p.style.height = (2 + Math.random()*3) + 'px';
+    particleField.appendChild(p);
+  }
 </script>
 
 </body>
